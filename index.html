@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SEO To-Do List App</title>
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
+
+    <style>
+      :root {
+        --bg: #020617;
+        --card: #0f172a;
+        --accent: #63bdf1;
+        --accent2: #3633ea;
+        --text: #e2e8f0;
+        --muted: #94a3b8;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        font-family: 'Inter', sans-serif;
+      }
+
+      body {
+        display: flex;
+        background:
+          radial-gradient(
+            circle at 20% 20%,
+            rgba(25, 28, 224, 0.3),
+            transparent
+          ),
+          radial-gradient(
+            circle at 80% 80%,
+            rgba(51, 231, 234, 0.3),
+            transparent
+          ),
+          var(--bg);
+        color: var(--text);
+        height: 100vh;
+      }
+
+      .sidebar {
+        width: 260px;
+        padding: 20px;
+        background: rgba(15, 23, 42, 0.9);
+        border-right: 1px solid rgba(255, 255, 255, 0.05);
+      }
+
+      .sidebar h2 {
+        margin-bottom: 10px;
+      }
+
+      .sidebar input,
+      .sidebar select,
+      .sidebar button {
+        width: 100%;
+        margin-bottom: 10px;
+        padding: 10px;
+        border-radius: 10px;
+        border: none;
+      }
+
+      .sidebar button {
+        background: linear-gradient(135deg, var(--accent), var(--accent2));
+        color: white;
+        cursor: pointer;
+      }
+
+      .container {
+        flex: 1;
+        padding: 20px;
+        max-width: 900px;
+        margin: auto;
+      }
+
+      h1 {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+
+      .card {
+        background: rgba(15, 23, 42, 0.9);
+        padding: 16px;
+        border-radius: 16px;
+        margin-bottom: 16px;
+        backdrop-filter: blur(10px);
+      }
+
+      .todo-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: #020617;
+        padding: 10px;
+        border-radius: 10px;
+        margin-bottom: 8px;
+      }
+
+      .left {
+        display: flex;
+        align-items: center;
+      }
+
+      .todo-item input {
+        margin-right: 10px;
+      }
+
+      .completed {
+        text-decoration: line-through;
+        color: var(--muted);
+      }
+
+      .actions button {
+        margin-left: 8px;
+        background: none;
+        border: none;
+        color: var(--muted);
+        cursor: pointer;
+      }
+
+      .progress-container {
+        margin-top: 20px;
+      }
+
+      .progress-bar {
+        height: 12px;
+        background: #1e293b;
+        border-radius: 10px;
+        overflow: hidden;
+      }
+
+      .progress-fill {
+        height: 100%;
+        width: 0%;
+        background: linear-gradient(90deg, var(--accent), var(--accent2));
+        transition: 0.3s;
+      }
+
+      .progress-text {
+        text-align: center;
+        margin-top: 10px;
+      }
+
+      .stats {
+        margin-top: 20px;
+        text-align: center;
+        font-size: 14px;
+        color: var(--muted);
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="sidebar">
+      <h2>Tambah Task</h2>
+
+      <select id="sectionSelect" onchange="lockSectionInput()"></select>
+
+      <input id="newSectionInput" placeholder="Atau buat section baru" />
+
+      <input id="taskInput" placeholder="Nama task" />
+
+      <button onclick="addTask()">
+        <i class="fa-solid fa-plus"></i> Tambah
+      </button>
+    </div>
+
+    <div class="container">
+      <h1>SEO To-Do List</h1>
+      <h2 style="text-align: center; margin-bottom: 20px; font-size: 14px">
+        by
+        <a
+          style="color: var(--accent); text-decoration: none"
+          href="https://carisolusi.biz.id"
+          target="_blank"
+          >CariSolusi.biz.id</a
+        >
+      </h2>
+
+      <div id="app"></div>
+
+      <div class="progress-container">
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div class="progress-text" id="progressText">0%</div>
+      </div>
+
+      <div class="stats">
+        <p id="todayDone">Task selesai hari ini: 0</p>
+        <p id="streak">Streak: 0 hari</p>
+      </div>
+    </div>
+
+    <script>
+      let data = JSON.parse(localStorage.getItem('data')) || [
+        { title: 'Riset Keyword', tasks: ['Cari keyword', 'Keyword turunan'] },
+      ];
+
+      let state = JSON.parse(localStorage.getItem('state')) || {};
+
+      let stats = JSON.parse(localStorage.getItem('stats')) || {
+        today: 0,
+        date: null,
+        streak: 0,
+      };
+
+      function save() {
+        localStorage.setItem('data', JSON.stringify(data));
+        localStorage.setItem('state', JSON.stringify(state));
+        localStorage.setItem('stats', JSON.stringify(stats));
+      }
+
+      function todayKey() {
+        return new Date().toDateString();
+      }
+
+      function updateStats() {
+        if (stats.date !== todayKey()) {
+          if (stats.today > 0) stats.streak++;
+          else stats.streak = 0;
+          stats.today = 0;
+          stats.date = todayKey();
+        }
+      }
+
+      function lockSectionInput() {
+        const select = document.getElementById('sectionSelect').value;
+        const input = document.getElementById('newSectionInput');
+        input.disabled = !!select;
+      }
+
+      function populateSectionSelect() {
+        const select = document.getElementById('sectionSelect');
+        select.innerHTML = '<option value="">Pilih Section</option>';
+
+        data.forEach((sec) => {
+          const opt = document.createElement('option');
+          opt.value = sec.title;
+          opt.innerText = sec.title;
+          select.appendChild(opt);
+        });
+      }
+
+      function render() {
+        updateStats();
+        populateSectionSelect();
+
+        const app = document.getElementById('app');
+        app.innerHTML = '';
+
+        let total = 0,
+          done = 0;
+
+        data.forEach((section, i) => {
+          const card = document.createElement('div');
+          card.className = 'card';
+
+          const header = document.createElement('div');
+          header.style.display = 'flex';
+          header.style.justifyContent = 'space-between';
+          header.style.alignItems = 'center';
+
+          const title = document.createElement('h2');
+          title.innerText = section.title;
+
+          const actionsTop = document.createElement('div');
+
+          const renameBtn = document.createElement('button');
+          renameBtn.innerHTML = '<i class="fa-solid fa-pen"></i>';
+          renameBtn.onclick = () => {
+            const newName = prompt('Rename section', section.title);
+            if (newName) {
+              section.title = newName;
+              save();
+              render();
+            }
+          };
+
+          const delBtn = document.createElement('button');
+          delBtn.innerHTML = '<i class="fa-solid fa-trash"></i>';
+          delBtn.onclick = () => {
+            if (confirm('Hapus section ini?')) {
+              data.splice(i, 1);
+              state = {}; // reset state biar tidak kacau
+              save();
+              render();
+            }
+          };
+
+          actionsTop.appendChild(renameBtn);
+          actionsTop.appendChild(delBtn);
+
+          header.appendChild(title);
+          header.appendChild(actionsTop);
+          card.appendChild(header);
+
+          section.tasks.forEach((task, j) => {
+            const key = `${i}-${j}`;
+            if (!state[key]) state[key] = false;
+
+            total++;
+            if (state[key]) done++;
+
+            const item = document.createElement('div');
+            item.className = 'todo-item';
+
+            const left = document.createElement('div');
+            left.className = 'left';
+
+            const cb = document.createElement('input');
+            cb.type = 'checkbox';
+            cb.checked = state[key];
+            cb.onchange = () => {
+              state[key] = cb.checked;
+              if (cb.checked) stats.today++;
+              else stats.today--;
+              save();
+              render();
+            };
+
+            const text = document.createElement('span');
+            text.innerText = task;
+            if (state[key]) text.classList.add('completed');
+
+            left.appendChild(cb);
+            left.appendChild(text);
+
+            const actions = document.createElement('div');
+            actions.className = 'actions';
+
+            const editBtn = document.createElement('button');
+            editBtn.innerHTML = '<i class="fa-solid fa-pen"></i>';
+            editBtn.onclick = () => {
+              const newText = prompt('Edit task', task);
+              if (newText) {
+                data[i].tasks[j] = newText;
+                save();
+                render();
+              }
+            };
+
+            const delBtn2 = document.createElement('button');
+            delBtn2.innerHTML = '<i class="fa-solid fa-trash"></i>';
+            delBtn2.onclick = () => {
+              data[i].tasks.splice(j, 1);
+              save();
+              render();
+            };
+
+            actions.appendChild(editBtn);
+            actions.appendChild(delBtn2);
+
+            item.appendChild(left);
+            item.appendChild(actions);
+
+            card.appendChild(item);
+          });
+
+          app.appendChild(card);
+        });
+
+        const percent = total ? Math.round((done / total) * 100) : 0;
+        document.getElementById('progressFill').style.width = percent + '%';
+        document.getElementById('progressText').innerText =
+          percent + '% selesai';
+
+        document.getElementById('todayDone').innerText =
+          'Task selesai hari ini: ' + stats.today;
+        document.getElementById('streak').innerText =
+          'Streak: ' + stats.streak + ' hari';
+      }
+
+      function addTask() {
+        const selectedSection = document.getElementById('sectionSelect').value;
+        const newSection = document.getElementById('newSectionInput').value;
+        const taskInput = document.getElementById('taskInput').value;
+
+        if (!taskInput) return;
+
+        let sectionName = selectedSection || newSection;
+        if (!sectionName) return;
+
+        let section = data.find((s) => s.title === sectionName);
+        if (!section) {
+          section = { title: sectionName, tasks: [] };
+          data.push(section);
+        }
+
+        section.tasks.push(taskInput);
+
+        document.getElementById('taskInput').value = '';
+        document.getElementById('newSectionInput').value = '';
+
+        save();
+        render();
+      }
+
+      render();
+    </script>
+  </body>
+</html>
