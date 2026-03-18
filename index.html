@@ -46,7 +46,7 @@
           ),
           var(--bg);
         color: var(--text);
-        height: 100vh;
+        min-height: 100vh;
       }
 
       .sidebar {
@@ -203,9 +203,60 @@
     </div>
 
     <script>
-      let data = JSON.parse(localStorage.getItem('data')) || [
-        { title: 'Riset Keyword', tasks: ['Cari keyword', 'Keyword turunan'] },
-      ];
+      let storedData = localStorage.getItem('data');
+
+      let data = storedData
+        ? JSON.parse(storedData)
+        : [
+            {
+              title: 'Riset Keyword (5 - 10 Menit)',
+              tasks: [
+                'Cari 1 keyword utama (contoh: jasa catering bekasi)',
+                'Buat 5–10 keyword turunan (murah, terdekat, harian, dll)',
+                'Tambahkan nama kota / lokasi',
+              ],
+            },
+            {
+              title: 'Buat Konten / Artikel',
+              tasks: [
+                'Tulis 1 artikel minimal 500 – 1000 kata',
+                'Masukkan keyword di judul',
+                'Masukkan keyword di paragraf awal',
+                'Gunakan heading (H1, H2, H3)',
+                'Tambahkan bullet / list',
+              ],
+            },
+            {
+              title: 'Optimasi SEO On Page',
+              tasks: [
+                'URL mengandung keyword',
+                'Meta title jelas dan menarik',
+                'Meta deskripsi mengandung keyword',
+                'Tambahkan gambar + alt text',
+              ],
+            },
+            {
+              title: 'Publish & Distribusi',
+              tasks: [
+                'Publish artikel / landingpage',
+                'Share ke WhatsApp',
+                'Share ke komunitas / grup',
+              ],
+            },
+            {
+              title: 'Follow Up (Paling Penting)',
+              tasks: [
+                'Cek apakah ada yang klik / tanya',
+                'Balas chat dengan cepat',
+                'Arahkan ke closing',
+              ],
+            },
+          ];
+
+      // inject ke localStorage pertama kali
+      if (!storedData) {
+        localStorage.setItem('data', JSON.stringify(data));
+      }
 
       let state = JSON.parse(localStorage.getItem('state')) || {};
 
